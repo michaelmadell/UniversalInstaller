@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="UniversalInstaller.Compiler/UniversalInstaller.Compiler.csproj" />
+  <Project Path="UniversalInstaller.Core/UniversalInstaller.Core.csproj" />
+  <Project Path="UniversalInstaller.Uninstaller/UniversalInstaller.Uninstaller.csproj" />
+  <Project Path="UniversalInstaller.Wizard/UniversalInstaller.Wizard.csproj" />
+</Solution>

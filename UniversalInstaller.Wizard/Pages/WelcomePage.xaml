@@ -1,0 +1,44 @@
+<UserControl x:Class="UniversalInstaller.Wizard.Pages.WelcomePage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:UniversalInstaller.Wizard.Pages"
+             mc:Ignorable="d"
+             d:DesignHeight="450" d:DesignWidth="700">
+    <Grid Background="White">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="200"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Left panel with image -->
+        <Border Grid.Column="0" Background="#2B579A">
+            <Image x:Name="WizardImage"
+                   Source="/Resources/Images/wizard.png"
+                   Stretch="Uniform"
+                   VerticalAlignment="Center"
+                   Margin="20"/>
+        </Border>
+
+        <!-- Right panel with content -->
+        <StackPanel Grid.Column="1" Margin="30" VerticalAlignment="Center">
+            <TextBlock x:Name="WelcomeTitle"
+                       FontSize="24"
+                       FontWeight="Bold"
+                       TextWrapping="Wrap"
+                       Margin="0,0,0,20"/>
+
+            <TextBlock x:Name="WelcomeMessage"
+                       FontSize="14"
+                       TextWrapping="Wrap"
+                       Margin="0,0,0,20"
+                       LineHeight="22"/>
+
+            <TextBlock FontSize="12"
+                       TextWrapping="Wrap"
+                       Foreground="Gray"
+                       Text="Click Next to continue, or Cancel to exit Setup."/>
+        </StackPanel>
+    </Grid>
+</UserControl>

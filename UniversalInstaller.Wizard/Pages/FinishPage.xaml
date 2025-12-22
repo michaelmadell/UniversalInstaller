@@ -1,0 +1,40 @@
+<UserControl x:Class="UniversalInstaller.Wizard.Pages.FinishPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d"
+             d:DesignHeight="450" d:DesignWidth="700">
+    <Grid Background="White">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="200"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <Border Grid.Column="0" Background="#2B579A">
+            <Image Source="/Resources/Images/wizard.png"
+                   Stretch="Uniform"
+                   VerticalAlignment="Center"
+                   Margin="20"/>
+        </Border>
+
+        <StackPanel Grid.Column="1" Margin="30" VerticalAlignment="Center">
+            <TextBlock x:Name="FinishTitle"
+                       FontSize="24"
+                       FontWeight="Bold"
+                       TextWrapping="Wrap"
+                       Margin="0,0,0,20"/>
+
+            <TextBlock x:Name="FinishMessage"
+                       FontSize="14"
+                       TextWrapping="Wrap"
+                       Margin="0,0,0,20"
+                       LineHeight="22"/>
+
+            <CheckBox x:Name="LaunchAppCheckBox"
+                     Content="Launch application now"
+                     Margin="0,10,0,0"
+                     Visibility="Collapsed"/>
+        </StackPanel>
+    </Grid>
+</UserControl>

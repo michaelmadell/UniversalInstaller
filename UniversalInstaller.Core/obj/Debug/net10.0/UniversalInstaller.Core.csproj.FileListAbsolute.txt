@@ -1,0 +1,11 @@
+C:\Users\labtest\UniversalInstaller\UniversalInstaller.Core\bin\Debug\net10.0\UniversalInstaller.Core.deps.json
+C:\Users\labtest\UniversalInstaller\UniversalInstaller.Core\bin\Debug\net10.0\UniversalInstaller.Core.dll
+C:\Users\labtest\UniversalInstaller\UniversalInstaller.Core\bin\Debug\net10.0\UniversalInstaller.Core.pdb
+C:\Users\labtest\UniversalInstaller\UniversalInstaller.Core\obj\Debug\net10.0\UniversalInstaller.Core.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\labtest\UniversalInstaller\UniversalInstaller.Core\obj\Debug\net10.0\UniversalInstaller.Core.AssemblyInfoInputs.cache
+C:\Users\labtest\UniversalInstaller\UniversalInstaller.Core\obj\Debug\net10.0\UniversalInstaller.Core.AssemblyInfo.cs
+C:\Users\labtest\UniversalInstaller\UniversalInstaller.Core\obj\Debug\net10.0\UniversalInstaller.Core.csproj.CoreCompileInputs.cache
+C:\Users\labtest\UniversalInstaller\UniversalInstaller.Core\obj\Debug\net10.0\UniversalInstaller.Core.dll
+C:\Users\labtest\UniversalInstaller\UniversalInstaller.Core\obj\Debug\net10.0\refint\UniversalInstaller.Core.dll
+C:\Users\labtest\UniversalInstaller\UniversalInstaller.Core\obj\Debug\net10.0\UniversalInstaller.Core.pdb
+C:\Users\labtest\UniversalInstaller\UniversalInstaller.Core\obj\Debug\net10.0\ref\UniversalInstaller.Core.dll
