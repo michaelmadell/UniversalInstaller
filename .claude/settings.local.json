@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet build:*)",
+      "Bash(dir:*)",
+      "Bash(findstr:*)",
+      "Bash(.UniversalInstaller.CompilerbinDebugnet10.0UniversalInstaller.Compiler.exe .Examplescorestation-hx-agent.ini TestOutput)",
+      "Bash(\".\\\\UniversalInstaller.Compiler\\\\bin\\\\Debug\\\\net10.0\\\\UniversalInstaller.Compiler.exe\" \".\\\\Examples\\\\corestation-hx-agent.ini\" \"TestOutput\")",
+      "Bash(powershell -Command \"\\(Get-Item CoreStationHXAgentSetup.exe\\).Length / 1KB\")",
+      "Bash(./CoreStationHXAgentSetup.exe)",
+      "Bash(echo:*)",
+      "Bash(timeout:*)",
+      "Bash(powershell -Command \"Start-Process -FilePath ''.\\\\CoreStationHXAgentSetup.exe'' -Wait -PassThru | Select-Object ExitCode\")",
+      "Bash(\"./UniversalInstaller.Compiler/bin/Debug/net10.0/UniversalInstaller.Compiler.exe\" \"./Examples/corestation-hx-agent.ini\" \"TestOutput\")",
+      "Bash(dotnet publish:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(powershell -Command \"\\(Get-Item TestOutput/CoreStationHXAgentSetup.exe\\).Length / 1KB\")",
+      "Bash(powershell -Command \"Get-ChildItem ''C:\\\\ProgramData\\\\CoreStation HX Agent\\\\''\")",
+      "Bash(powershell -Command:*)",
+      "Bash(\"./UniversalInstaller.Compiler/bin/Debug/net10.0/UniversalInstaller.Compiler.exe\" \"./Examples/corestation-hx-agent.ini\")"
+    ]
+  }
+}

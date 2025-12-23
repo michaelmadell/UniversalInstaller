@@ -32,11 +32,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\labtest\\UniversalInstaller\\UniversalInstaller.Compiler\\UniversalInstaller.Compiler.csproj",
+      "projectUniqueName": "c:\\Users\\labtest\\UniversalInstaller\\UniversalInstaller.Compiler\\UniversalInstaller.Compiler.csproj",
       "projectName": "UniversalInstaller.Compiler",
-      "projectPath": "C:\\Users\\labtest\\UniversalInstaller\\UniversalInstaller.Compiler\\UniversalInstaller.Compiler.csproj",
+      "projectPath": "c:\\Users\\labtest\\UniversalInstaller\\UniversalInstaller.Compiler\\UniversalInstaller.Compiler.csproj",
       "packagesPath": "C:\\Users\\labtest\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\labtest\\UniversalInstaller\\UniversalInstaller.Compiler\\obj\\",
+      "outputPath": "c:\\Users\\labtest\\UniversalInstaller\\UniversalInstaller.Compiler\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\labtest\\AppData\\Roaming\\NuGet\\NuGet.Config",
@@ -53,8 +53,8 @@
         "net10.0": {
           "targetAlias": "net10.0",
           "projectReferences": {
-            "C:\\Users\\labtest\\UniversalInstaller\\UniversalInstaller.Core\\UniversalInstaller.Core.csproj": {
-              "projectPath": "C:\\Users\\labtest\\UniversalInstaller\\UniversalInstaller.Core\\UniversalInstaller.Core.csproj"
+            "c:\\Users\\labtest\\UniversalInstaller\\UniversalInstaller.Core\\UniversalInstaller.Core.csproj": {
+              "projectPath": "c:\\Users\\labtest\\UniversalInstaller\\UniversalInstaller.Core\\UniversalInstaller.Core.csproj"
             }
           }
         }

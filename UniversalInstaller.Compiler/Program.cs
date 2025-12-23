@@ -79,14 +79,65 @@ namespace UniversalInstaller.Compiler
             Console.WriteLine($"Output: {installerPath}");
             Console.WriteLine();
 
-            // Step 1: Copy the wizard executable
+            // Step 1: Copy the wizard executable (contains embedded uninstaller and Core.dll)
             Console.WriteLine("[1/5] Copying wizard executable...");
+            Console.WriteLine("  Note: Looking for published single-file wizard executable");
             var wizardExe = FindWizardExecutable();
             if (!File.Exists(wizardExe))
             {
-                throw new FileNotFoundException("Wizard executable not found. Please build the solution first.");
+                throw new FileNotFoundException("Wizard executable not found. Please publish the Wizard project first using:\n  dotnet publish UniversalInstaller.Wizard -c Debug");
             }
+
+            var wizardDir = Path.GetDirectoryName(wizardExe);
+
+            // Check if this is a single-file published exe (no .dll alongside it)
+            var wizardBaseName = Path.GetFileNameWithoutExtension(wizardExe);
+            var wizardDll = Path.Combine(wizardDir, wizardBaseName + ".dll");
+            var isSingleFile = !File.Exists(wizardDll);
+
+            // Copy the .exe file
             File.Copy(wizardExe, installerPath, true);
+            Console.WriteLine($"  Copied: {Path.GetFileName(installerPath)} ({new FileInfo(wizardExe).Length / 1024} KB)");
+
+            if (!isSingleFile)
+            {
+                // Not published as single-file, copy runtime files
+                Console.WriteLine("  Warning: Wizard not published as single-file. Copying runtime files...");
+                var installerBaseName = Path.GetFileNameWithoutExtension(installerPath);
+
+                // Copy .dll
+                var installerDll = Path.Combine(outputPath, installerBaseName + ".dll");
+                if (File.Exists(wizardDll))
+                {
+                    File.Copy(wizardDll, installerDll, true);
+                    Console.WriteLine($"  Copied: {Path.GetFileName(installerDll)}");
+                }
+
+                // Copy .runtimeconfig.json
+                var wizardRuntimeConfig = Path.Combine(wizardDir, wizardBaseName + ".runtimeconfig.json");
+                var installerRuntimeConfig = Path.Combine(outputPath, installerBaseName + ".runtimeconfig.json");
+                if (File.Exists(wizardRuntimeConfig))
+                {
+                    File.Copy(wizardRuntimeConfig, installerRuntimeConfig, true);
+                    Console.WriteLine($"  Copied: {Path.GetFileName(installerRuntimeConfig)}");
+                }
+
+                // Copy and fix .deps.json
+                var wizardDeps = Path.Combine(wizardDir, wizardBaseName + ".deps.json");
+                var installerDeps = Path.Combine(outputPath, installerBaseName + ".deps.json");
+                if (File.Exists(wizardDeps))
+                {
+                    var depsContent = File.ReadAllText(wizardDeps);
+                    depsContent = depsContent.Replace(wizardBaseName + ".dll", installerBaseName + ".dll");
+                    depsContent = depsContent.Replace("\"" + wizardBaseName + "/", "\"" + installerBaseName + "/");
+                    File.WriteAllText(installerDeps, depsContent);
+                    Console.WriteLine($"  Copied: {Path.GetFileName(installerDeps)}");
+                }
+            }
+            else
+            {
+                Console.WriteLine("  Using single-file published wizard (no additional runtime files needed)");
+            }
 
             // Step 2: Create package directory
             Console.WriteLine("[2/5] Creating package structure...");
@@ -144,14 +195,41 @@ namespace UniversalInstaller.Compiler
             // Copy wizard dependencies
             CopyWizardDependencies(Path.GetDirectoryName(wizardExe), packageDir);
 
-            // Step 5: Create self-extracting archive (simplified - in real scenario, would embed as resource)
-            Console.WriteLine("[5/5] Creating installer package...");
+            // Step 5: Create self-extracting archive and append to executable
+            Console.WriteLine("[5/5] Creating self-contained installer package...");
 
             if (config.Setup.Compression)
             {
                 var archivePath = Path.Combine(outputPath, "installer.dat");
                 ZipFile.CreateFromDirectory(packageDir, archivePath);
                 Console.WriteLine($"  Created compressed package: {archivePath}");
+                Console.WriteLine($"  Package size: {new FileInfo(archivePath).Length / 1024} KB");
+
+                // Append installer.dat to the executable to make it truly self-contained
+                Console.WriteLine($"  Appending package to executable...");
+                using (var exeStream = File.Open(installerPath, FileMode.Append))
+                using (var datStream = File.OpenRead(archivePath))
+                {
+                    datStream.CopyTo(exeStream);
+
+                    // Write a marker and the offset of where the ZIP starts
+                    using (var writer = new BinaryWriter(exeStream))
+                    {
+                        var zipOffset = exeStream.Length - datStream.Length;
+                        writer.Write(zipOffset); // Write offset as Int64
+                        writer.Write("UNIINST"); // Write magic marker
+                    }
+                }
+
+                // Keep installer.dat for users who want to distribute both files
+                Console.WriteLine($"  Embedded package into executable");
+                Console.WriteLine($"  Note: You can distribute just the .exe file, or both .exe and .dat");
+            }
+            else
+            {
+                // Without compression, copy files directly next to installer
+                Console.WriteLine($"  Copying package files to output directory (no compression)");
+                CopyDirectory(packageDir, outputPath);
             }
 
             // Clean up temp directory
@@ -167,12 +245,20 @@ namespace UniversalInstaller.Compiler
             Console.WriteLine($"  Version: {config.Setup.AppVersion}");
             Console.WriteLine($"  Files: {fileCount}");
             Console.WriteLine($"  Compression: {(config.Setup.Compression ? "Enabled" : "Disabled")}");
+            Console.WriteLine($"  Self-contained: Yes (includes embedded uninstaller)");
         }
 
         static string FindWizardExecutable()
         {
             var possiblePaths = new[]
             {
+                // Try published single-file first (with runtime identifier)
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "UniversalInstaller.Wizard", "bin", "Debug", "net10.0-windows", "win-x64", "publish", "UniversalInstaller.Wizard.exe"),
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "UniversalInstaller.Wizard", "bin", "Release", "net10.0-windows", "win-x64", "publish", "UniversalInstaller.Wizard.exe"),
+                // Try published single-file without runtime identifier
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "UniversalInstaller.Wizard", "bin", "Debug", "net10.0-windows", "publish", "UniversalInstaller.Wizard.exe"),
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "UniversalInstaller.Wizard", "bin", "Release", "net10.0-windows", "publish", "UniversalInstaller.Wizard.exe"),
+                // Fall back to regular build output
                 Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "UniversalInstaller.Wizard.exe"),
                 Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "UniversalInstaller.Wizard", "bin", "Debug", "net10.0-windows", "UniversalInstaller.Wizard.exe"),
                 Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "UniversalInstaller.Wizard", "bin", "Release", "net10.0-windows", "UniversalInstaller.Wizard.exe"),

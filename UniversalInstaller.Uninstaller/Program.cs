@@ -11,17 +11,68 @@ namespace UniversalInstaller.Uninstaller
     {
         static void Main(string[] args)
         {
+            // Check if we're running from temp (cleanup mode)
+            var isCleanupMode = args.Length > 0 && args[0] == "--cleanup";
+
+            if (!isCleanupMode)
+            {
+                // First run: Copy to temp and restart from there
+                var currentExe = Environment.ProcessPath ?? System.Reflection.Assembly.GetExecutingAssembly().Location;
+                var tempExe = Path.Combine(Path.GetTempPath(), "UniversalInstaller_Cleanup_" + Guid.NewGuid().ToString("N") + ".exe");
+                var installDir = AppDomain.CurrentDomain.BaseDirectory;
+
+                try
+                {
+                    File.Copy(currentExe, tempExe, true);
+
+                    // Start the cleanup process from temp
+                    var startInfo = new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = tempExe,
+                        UseShellExecute = false,
+                        CreateNoWindow = false
+                    };
+
+                    // Add arguments properly without extra quotes
+                    startInfo.ArgumentList.Add("--cleanup");
+                    startInfo.ArgumentList.Add(installDir);
+
+                    System.Diagnostics.Process.Start(startInfo);
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error: Could not start cleanup process: {ex.Message}");
+                    Console.WriteLine("Press any key to exit...");
+                    Console.ReadKey();
+                    return;
+                }
+            }
+
+            // Cleanup mode: We're running from temp, can safely delete installation directory
+            var targetDir = args.Length > 1 ? args[1] : AppDomain.CurrentDomain.BaseDirectory;
+
             Console.WriteLine("Universal Installer - Uninstaller");
             Console.WriteLine("=================================\n");
 
             try
             {
-                // Load installation manifest
-                var manifestPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "install.manifest");
+                // Load installation manifest from the installation directory
+                var manifestPath = Path.Combine(targetDir, "install.manifest");
 
                 if (!File.Exists(manifestPath))
                 {
                     Console.WriteLine("Error: Installation manifest not found.");
+                    Console.WriteLine($"Expected location: {manifestPath}");
+                    Console.WriteLine($"Target directory: {targetDir}");
+                    Console.WriteLine($"Args count: {args.Length}");
+                    if (args.Length > 0)
+                    {
+                        for (int i = 0; i < args.Length; i++)
+                        {
+                            Console.WriteLine($"  Arg[{i}]: '{args[i]}'");
+                        }
+                    }
                     Console.WriteLine("Press any key to exit...");
                     Console.ReadKey();
                     return;
@@ -55,6 +106,71 @@ namespace UniversalInstaller.Uninstaller
                 }
 
                 Console.WriteLine("\nUninstalling...\n");
+
+                // Check for and run removal script from registry
+                // Try multiple possible registry paths
+                string[] possiblePaths = new[]
+                {
+                    $@"Software\CoreStation\HXAgent", // Specific to CoreStation HX Agent
+                    $@"Software\{manifest.AppName.Replace(" ", "")}\{manifest.AppName.Replace(" ", "")}", // Generic pattern
+                };
+
+                string removeScriptPath = null;
+                foreach (var regPath in possiblePaths)
+                {
+                    try
+                    {
+                        using (var key = Registry.LocalMachine.OpenSubKey(regPath, false))
+                        {
+                            if (key != null)
+                            {
+                                removeScriptPath = key.GetValue("RemoveScript") as string;
+                                if (!string.IsNullOrEmpty(removeScriptPath))
+                                {
+                                    Console.WriteLine($"Found removal script in registry: {regPath}");
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        // Continue to next path
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(removeScriptPath) && File.Exists(removeScriptPath))
+                {
+                    Console.WriteLine($"Running removal script: {removeScriptPath}");
+                    try
+                    {
+                        var startInfo = new System.Diagnostics.ProcessStartInfo
+                        {
+                            FileName = "powershell.exe",
+                            UseShellExecute = false,
+                            CreateNoWindow = false,
+                            WorkingDirectory = Path.GetDirectoryName(removeScriptPath)
+                        };
+                        startInfo.ArgumentList.Add("-ExecutionPolicy");
+                        startInfo.ArgumentList.Add("Bypass");
+                        startInfo.ArgumentList.Add("-NoProfile");
+                        startInfo.ArgumentList.Add("-File");
+                        startInfo.ArgumentList.Add(removeScriptPath);
+
+                        var process = System.Diagnostics.Process.Start(startInfo);
+                        if (process != null)
+                        {
+                            process.WaitForExit();
+                            Console.WriteLine($"Removal script completed with exit code: {process.ExitCode}");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Failed to run removal script: {ex.Message}");
+                    }
+                }
+
+                Console.WriteLine();
 
                 int filesRemoved = 0;
                 int dirsRemoved = 0;
@@ -123,24 +239,22 @@ namespace UniversalInstaller.Uninstaller
                     Console.WriteLine($"  Failed to remove registry entry: {ex.Message}");
                 }
 
-                // Remove installation directory if empty
+                // Remove installation directory (now safe since we're running from temp)
                 if (Directory.Exists(manifest.InstallPath))
                 {
                     try
                     {
-                        if (!Directory.EnumerateFileSystemEntries(manifest.InstallPath).Any())
-                        {
-                            Directory.Delete(manifest.InstallPath);
-                            Console.WriteLine($"\nRemoved installation directory: {manifest.InstallPath}");
-                        }
-                        else
-                        {
-                            Console.WriteLine($"\nInstallation directory not removed (contains user files): {manifest.InstallPath}");
-                        }
+                        // Give the original uninstaller process time to exit
+                        System.Threading.Thread.Sleep(500);
+
+                        Directory.Delete(manifest.InstallPath, true);
+                        dirsRemoved++;
+                        Console.WriteLine($"\nRemoved installation directory: {manifest.InstallPath}");
                     }
                     catch (Exception ex)
                     {
                         Console.WriteLine($"\nFailed to remove installation directory: {ex.Message}");
+                        Console.WriteLine("Some files may still be in use. Please remove manually if needed.");
                     }
                 }
 
@@ -159,6 +273,35 @@ namespace UniversalInstaller.Uninstaller
 
             Console.WriteLine("\nPress any key to exit...");
             Console.ReadKey();
+
+            // Cleanup temp exe if we're in cleanup mode
+            if (isCleanupMode)
+            {
+                try
+                {
+                    var currentExe = Environment.ProcessPath ?? System.Reflection.Assembly.GetExecutingAssembly().Location;
+                    if (!string.IsNullOrEmpty(currentExe) && currentExe.Contains("UniversalInstaller_Cleanup_"))
+                    {
+                        // Schedule deletion of temp exe using cmd
+                        var batchFile = Path.Combine(Path.GetTempPath(), "cleanup_" + Guid.NewGuid().ToString("N") + ".bat");
+                        File.WriteAllText(batchFile, $"@echo off\ntimeout /t 2 /nobreak >nul\ndel /f /q \"{currentExe}\"\ndel /f /q \"%~f0\"");
+
+                        var startInfo = new System.Diagnostics.ProcessStartInfo
+                        {
+                            FileName = batchFile,
+                            UseShellExecute = false,
+                            CreateNoWindow = true,
+                            WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden
+                        };
+
+                        System.Diagnostics.Process.Start(startInfo);
+                    }
+                }
+                catch
+                {
+                    // Ignore cleanup errors
+                }
+            }
         }
     }
 }

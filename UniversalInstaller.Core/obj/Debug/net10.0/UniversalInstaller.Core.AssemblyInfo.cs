@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("UniversalInstaller.Core")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1ed0593b6d1bbd8de905988a3bbdf7eca1fde123")]
 [assembly: System.Reflection.AssemblyProductAttribute("UniversalInstaller.Core")]
 [assembly: System.Reflection.AssemblyTitleAttribute("UniversalInstaller.Core")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

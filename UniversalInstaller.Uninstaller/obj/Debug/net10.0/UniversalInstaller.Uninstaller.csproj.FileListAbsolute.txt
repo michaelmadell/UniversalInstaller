@@ -16,3 +16,4 @@ C:\Users\labtest\UniversalInstaller\UniversalInstaller.Uninstaller\obj\Debug\net
 C:\Users\labtest\UniversalInstaller\UniversalInstaller.Uninstaller\obj\Debug\net10.0\UniversalInstaller.Uninstaller.pdb
 C:\Users\labtest\UniversalInstaller\UniversalInstaller.Uninstaller\obj\Debug\net10.0\UniversalInstaller.Uninstaller.genruntimeconfig.cache
 C:\Users\labtest\UniversalInstaller\UniversalInstaller.Uninstaller\obj\Debug\net10.0\ref\UniversalInstaller.Uninstaller.dll
+c:\Users\labtest\UniversalInstaller\UniversalInstaller.Uninstaller\obj\Debug\net10.0\UniversalInstaller.Uninstaller.sourcelink.json

@@ -121,7 +121,8 @@ namespace UniversalInstaller.Core.Installation
 
         private async Task CopyFileAsync(FileEntry file)
         {
-            var sourcePath = Path.Combine(_sourceBasePath, file.Source);
+            // Files are in the Files subdirectory of the extracted package
+            var sourcePath = Path.Combine(_sourceBasePath, "Files", file.Source);
             var destDir = PathResolver.Resolve(file.DestDir);
 
             if (!Directory.Exists(destDir))
@@ -196,15 +197,26 @@ namespace UniversalInstaller.Core.Installation
                     if (key != null)
                     {
                         var valueType = GetRegistryValueKind(reg.ValueType);
-                        object value = reg.ValueData;
+
+                        // Resolve value data (handle {app}, {#AppVersion}, etc.)
+                        var resolvedData = reg.ValueData;
+
+                        // Replace {#AppVersion} with actual version
+                        if (resolvedData.Contains("{#AppVersion}"))
+                            resolvedData = resolvedData.Replace("{#AppVersion}", _config.Setup.AppVersion);
+
+                        // Resolve path placeholders
+                        resolvedData = PathResolver.Resolve(resolvedData);
+
+                        object value = resolvedData;
 
                         if (valueType == RegistryValueKind.DWord)
-                            value = int.Parse(reg.ValueData);
+                            value = int.Parse(resolvedData);
                         else if (valueType == RegistryValueKind.QWord)
-                            value = long.Parse(reg.ValueData);
+                            value = long.Parse(resolvedData);
 
                         key.SetValue(reg.ValueName, value, valueType);
-                        Log($"Created registry entry: {reg.Root}\\{subkey}\\{reg.ValueName}");
+                        Log($"Created registry entry: {reg.Root}\\{subkey}\\{reg.ValueName} = {value}");
                     }
                 }
             }
@@ -240,27 +252,42 @@ namespace UniversalInstaller.Core.Installation
             try
             {
                 var filename = PathResolver.Resolve(run.Filename);
+                var parameters = PathResolver.Resolve(run.Parameters);
                 var workingDir = string.IsNullOrEmpty(run.WorkingDir) ? Path.GetDirectoryName(filename) : PathResolver.Resolve(run.WorkingDir);
+
+                Log($"Running command: {filename} {parameters}");
+                Log($"Working directory: {workingDir}");
 
                 var startInfo = new ProcessStartInfo
                 {
                     FileName = filename,
-                    Arguments = run.Parameters,
+                    Arguments = parameters,
                     WorkingDirectory = workingDir,
                     UseShellExecute = false,
-                    CreateNoWindow = true
+                    CreateNoWindow = true,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true
                 };
 
                 var process = Process.Start(startInfo);
                 if (process != null)
                 {
+                    var output = await process.StandardOutput.ReadToEndAsync();
+                    var error = await process.StandardError.ReadToEndAsync();
                     await process.WaitForExitAsync();
+
+                    if (!string.IsNullOrWhiteSpace(output))
+                        Log($"Output: {output}");
+                    if (!string.IsNullOrWhiteSpace(error))
+                        Log($"Error: {error}");
+
                     Log($"Executed: {filename} (Exit code: {process.ExitCode})");
                 }
             }
             catch (Exception ex)
             {
                 Log($"Failed to execute command: {ex.Message}");
+                Log($"Stack trace: {ex.StackTrace}");
             }
         }
 
@@ -283,12 +310,46 @@ namespace UniversalInstaller.Core.Installation
                 File.WriteAllText(manifestPath, System.Text.Json.JsonSerializer.Serialize(manifest));
             });
 
-            // Copy uninstaller executable (should be embedded or included)
-            // For now, we'll create a placeholder
+            // Extract embedded uninstaller executable (now a self-contained single-file)
+            await ExtractEmbeddedUninstallerAsync(uninstallerPath);
+
+            _installedFiles.Add(uninstallerPath);
+            _installedFiles.Add(manifestPath);
+
             Log($"Uninstaller created at: {uninstallerPath}");
 
             // Register uninstaller in Windows
             RegisterUninstaller(uninstallerPath);
+        }
+
+        private async Task ExtractEmbeddedUninstallerAsync(string targetPath)
+        {
+            await ExtractEmbeddedResourceAsync("UniversalInstaller.Uninstaller.exe", targetPath);
+        }
+
+        private async Task ExtractEmbeddedResourceAsync(string resourceName, string targetPath)
+        {
+            await Task.Run(() =>
+            {
+                var assembly = System.Reflection.Assembly.GetEntryAssembly();
+                if (assembly == null)
+                {
+                    throw new InvalidOperationException("Could not get entry assembly");
+                }
+
+                using (var stream = assembly.GetManifestResourceStream(resourceName))
+                {
+                    if (stream == null)
+                    {
+                        throw new FileNotFoundException($"Embedded resource '{resourceName}' not found in assembly");
+                    }
+
+                    using (var fileStream = File.Create(targetPath))
+                    {
+                        stream.CopyTo(fileStream);
+                    }
+                }
+            });
         }
 
         private void RegisterUninstaller(string uninstallerPath)

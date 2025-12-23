@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO.Compression;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -27,6 +28,9 @@ namespace UniversalInstaller.Wizard
         {
             try
             {
+                // Extract installer package if needed
+                ExtractInstallerPackage();
+
                 // Try to load config.ini from the same directory as the executable
                 var configPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config.ini");
                 if (System.IO.File.Exists(configPath))
@@ -46,6 +50,117 @@ namespace UniversalInstaller.Wizard
             {
                 MessageBox.Show($"Error loading configuration: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 _config = new InstallerConfig();
+            }
+        }
+
+        private void ExtractInstallerPackage()
+        {
+            var baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            var installerDatPath = System.IO.Path.Combine(baseDir, "installer.dat");
+
+            // For single-file apps, use Environment.ProcessPath which works correctly
+            var exePath = Environment.ProcessPath ?? System.Reflection.Assembly.GetExecutingAssembly().Location;
+            if (string.IsNullOrEmpty(exePath))
+                exePath = System.IO.Path.Combine(baseDir, System.AppDomain.CurrentDomain.FriendlyName);
+
+            // Try to extract from embedded package in the executable first
+            if (TryExtractEmbeddedPackage(exePath, baseDir))
+            {
+                return;
+            }
+
+            // Fallback: Check if installer.dat exists alongside the executable
+            if (System.IO.File.Exists(installerDatPath))
+            {
+                try
+                {
+                    ExtractZipArchive(installerDatPath, baseDir);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error extracting installer package: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
+        private bool TryExtractEmbeddedPackage(string exePath, string destinationDir)
+        {
+            try
+            {
+                if (!System.IO.File.Exists(exePath))
+                    return false;
+
+                using (var exeStream = System.IO.File.OpenRead(exePath))
+                {
+                    // Read the last 16 bytes to check for our marker
+                    if (exeStream.Length < 16)
+                        return false;
+
+                    exeStream.Seek(-16, System.IO.SeekOrigin.End);
+                    using (var reader = new System.IO.BinaryReader(exeStream))
+                    {
+                        var zipOffset = reader.ReadInt64();
+                        var marker = reader.ReadString();
+
+                        if (marker != "UNIINST")
+                            return false;
+
+                        // Found embedded package - extract it to a temp file
+                        exeStream.Seek(zipOffset, System.IO.SeekOrigin.Begin);
+                        var zipLength = exeStream.Length - zipOffset - 16;
+
+                        var tempZipPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "installer_temp.dat");
+                        using (var tempStream = System.IO.File.Create(tempZipPath))
+                        {
+                            var buffer = new byte[81920]; // 80KB buffer
+                            long remaining = zipLength;
+                            while (remaining > 0)
+                            {
+                                int toRead = (int)Math.Min(buffer.Length, remaining);
+                                int bytesRead = exeStream.Read(buffer, 0, toRead);
+                                if (bytesRead == 0) break;
+                                tempStream.Write(buffer, 0, bytesRead);
+                                remaining -= bytesRead;
+                            }
+                        }
+
+                        // Extract the ZIP archive
+                        ExtractZipArchive(tempZipPath, destinationDir);
+
+                        // Clean up temp file
+                        try { System.IO.File.Delete(tempZipPath); } catch { }
+
+                        return true;
+                    }
+                }
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private void ExtractZipArchive(string zipPath, string destinationDir)
+        {
+            using (var archive = System.IO.Compression.ZipFile.OpenRead(zipPath))
+            {
+                foreach (var entry in archive.Entries)
+                {
+                    var destinationPath = System.IO.Path.Combine(destinationDir, entry.FullName);
+
+                    // Create directory if needed
+                    var destDir = System.IO.Path.GetDirectoryName(destinationPath);
+                    if (!string.IsNullOrEmpty(destDir) && !System.IO.Directory.Exists(destDir))
+                    {
+                        System.IO.Directory.CreateDirectory(destDir);
+                    }
+
+                    // Extract file (skip directories)
+                    if (!string.IsNullOrEmpty(entry.Name))
+                    {
+                        entry.ExtractToFile(destinationPath, overwrite: true);
+                    }
+                }
             }
         }
 

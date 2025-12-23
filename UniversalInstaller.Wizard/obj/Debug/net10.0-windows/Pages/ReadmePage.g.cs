@@ -60,7 +60,7 @@ namespace UniversalInstaller.Wizard.Pages {
                 return;
             }
             _contentLoaded = true;
-            System.Uri resourceLocater = new System.Uri("/UniversalInstaller.Wizard;V1.0.0.0;component/pages/readmepage.xaml", System.UriKind.Relative);
+            System.Uri resourceLocater = new System.Uri("/UniversalInstaller.Wizard;component/pages/readmepage.xaml", System.UriKind.Relative);
             
             #line 1 "..\..\..\..\Pages\ReadmePage.xaml"
             System.Windows.Application.LoadComponent(this, resourceLocater);

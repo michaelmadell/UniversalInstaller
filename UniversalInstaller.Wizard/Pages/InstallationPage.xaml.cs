@@ -27,6 +27,12 @@ namespace UniversalInstaller.Wizard.Pages
                 PathResolver.AppName = _config.Setup.AppName;
                 PathResolver.GroupName = _config.Setup.DefaultGroupName;
 
+                // Set installation path if not already set (e.g., when DirectoryPage is disabled)
+                if (string.IsNullOrEmpty(PathResolver.InstallationPath))
+                {
+                    PathResolver.InstallationPath = PathResolver.Resolve(_config.Setup.DefaultDirName);
+                }
+
                 var sourceBasePath = AppDomain.CurrentDomain.BaseDirectory;
                 _engine = new InstallationEngine(_config, sourceBasePath);
 

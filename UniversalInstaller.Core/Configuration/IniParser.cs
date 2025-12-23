@@ -89,7 +89,8 @@ namespace UniversalInstaller.Core.Configuration
                         // For other sections, accumulate entries
                         if (key.Equals("Source", StringComparison.OrdinalIgnoreCase) ||
                             key.Equals("Name", StringComparison.OrdinalIgnoreCase) ||
-                            key.Equals("Filename", StringComparison.OrdinalIgnoreCase))
+                            key.Equals("Filename", StringComparison.OrdinalIgnoreCase) ||
+                            key.Equals("Root", StringComparison.OrdinalIgnoreCase))
                         {
                             // Start of new entry
                             if (currentEntry.Count > 0)

@@ -16,3 +16,4 @@ C:\Users\labtest\UniversalInstaller\UniversalInstaller.Compiler\obj\Debug\net10.
 C:\Users\labtest\UniversalInstaller\UniversalInstaller.Compiler\obj\Debug\net10.0\UniversalInstaller.Compiler.pdb
 C:\Users\labtest\UniversalInstaller\UniversalInstaller.Compiler\obj\Debug\net10.0\UniversalInstaller.Compiler.genruntimeconfig.cache
 C:\Users\labtest\UniversalInstaller\UniversalInstaller.Compiler\obj\Debug\net10.0\ref\UniversalInstaller.Compiler.dll
+c:\Users\labtest\UniversalInstaller\UniversalInstaller.Compiler\obj\Debug\net10.0\UniversalInstaller.Compiler.sourcelink.json
