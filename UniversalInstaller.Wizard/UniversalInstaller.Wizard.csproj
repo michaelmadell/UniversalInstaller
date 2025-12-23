@@ -27,4 +27,8 @@
     <ApplicationIcon>app.ico</ApplicationIcon>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Resource Include="Resources\Images\Wizard.png" />
+  </ItemGroup>
+
 </Project>
