@@ -1,3 +1,0 @@
-C:\Users\labtest\UniversalInstaller\UniversalInstaller.Wizard\bin\Debug\net10.0-windows\win-x64\publish\UniversalInstaller.Wizard.pdb
-C:\Users\labtest\UniversalInstaller\UniversalInstaller.Wizard\bin\Debug\net10.0-windows\win-x64\publish\UniversalInstaller.Core.pdb
-C:\Users\labtest\UniversalInstaller\UniversalInstaller.Wizard\bin\Debug\net10.0-windows\win-x64\publish\UniversalInstaller.Wizard.exe
